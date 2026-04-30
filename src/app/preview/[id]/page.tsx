@@ -44,11 +44,12 @@ export default function PreviewPage() {
     try {
       const content = previewRef.current.innerHTML;
       const html = `<!DOCTYPE html>
-<html lang="en">
+<html lang="${page.language || 'en'}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${page.product_name} - Sales Page</title>
+  <title>${page.seo?.title || page.product_name}</title>
+  <meta name="description" content="${page.seo?.description || ''}" />
   <script src="https://cdn.tailwindcss.com"><\/script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
@@ -107,15 +108,28 @@ export default function PreviewPage() {
             <Palette className="w-3.5 h-3.5 text-gray-500 ml-2" />
             {templates.map(t => (
               <button key={t.id} id={`template-${t.id}-btn`} onClick={() => setActiveTemplate(t.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5 ${
-                  activeTemplate === t.id
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5 ${activeTemplate === t.id
                     ? 'bg-indigo-600 text-white shadow-sm'
                     : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
-                }`}>
+                  }`}>
                 <span>{t.emoji}</span>
                 {t.label}
               </button>
             ))}
+          </div>
+
+          {/* SEO Info */}
+          <div className="group relative">
+            <div className="flex items-center gap-1.5 text-xs text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded-lg px-3 py-1.5 cursor-help">
+              <Sparkles className="w-3.5 h-3.5" />
+              SEO Optimized
+            </div>
+            <div className="absolute top-full left-0 mt-2 w-64 p-4 bg-gray-900 border border-gray-800 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+              <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">SEO Title</p>
+              <p className="text-xs text-white mb-3">{page.seo?.title}</p>
+              <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">Meta Description</p>
+              <p className="text-xs text-gray-400 leading-relaxed">{page.seo?.description}</p>
+            </div>
           </div>
 
           {/* Preview badge */}
@@ -123,6 +137,13 @@ export default function PreviewPage() {
             <Eye className="w-3.5 h-3.5" />
             Live Preview
           </div>
+
+          {/* Edit */}
+          <button id="edit-details-btn" onClick={() => router.push(`/dashboard/edit/${params.id}`)}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-800/80 hover:bg-gray-700 text-white text-xs font-semibold rounded-xl transition-all duration-200 border border-white/5">
+            <Palette className="w-3.5 h-3.5" />
+            Edit Details
+          </button>
 
           {/* Export */}
           <button id="export-html-btn" onClick={handleExport} disabled={isExporting}

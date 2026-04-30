@@ -57,6 +57,11 @@ export default function GeneratePage() {
     template_name: 'modern',
   });
 
+  const [seo, setSeo] = useState({
+    title: '',
+    description: '',
+  });
+
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(prev => ({ ...prev, [field]: e.target.value }));
 
@@ -89,6 +94,8 @@ export default function GeneratePage() {
       formData.append('language', form.language);
       formData.append('currency', form.currency);
       formData.append('template_name', form.template_name);
+      formData.append('seo[title]', seo.title);
+      formData.append('seo[description]', seo.description);
 
       features.filter(Boolean).forEach((f, i) => formData.append(`features[${i}]`, f));
       usp.filter(Boolean).forEach((u, i) => formData.append(`usp[${i}]`, u));
@@ -246,6 +253,74 @@ export default function GeneratePage() {
               </button>
             </section>
           </div>
+
+          {/* SEO Configuration */}
+          <section className="glass-card p-8 space-y-8 animate-fade-in-up delay-150 border-l-4 border-blue-500/50">
+            <div className="flex items-center justify-between pb-6 border-b border-white/5">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400">
+                  <Globe className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white">SEO Configuration</h2>
+                  <p className="text-[10px] text-gray-500 font-medium uppercase mt-0.5 tracking-wider">Search Engine Optimization</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <div className="flex justify-between items-end mb-2.5">
+                  <label className="text-sm font-semibold text-gray-400 ml-1">SEO Title (Optional)</label>
+                  <span className={`text-[10px] font-mono ${seo.title.length > 255 ? 'text-red-500' : seo.title.length > 60 ? 'text-amber-500' : 'text-gray-600'}`}>
+                    {seo.title.length}/255 chars
+                  </span>
+                </div>
+                <input 
+                  type="text" 
+                  maxLength={255}
+                  value={seo.title} 
+                  onChange={(e) => setSeo(prev => ({ ...prev, title: e.target.value }))} 
+                  placeholder="Leave blank for AI to generate"
+                  className={inputClass} 
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-end mb-2.5">
+                  <label className="text-sm font-semibold text-gray-400 ml-1">Meta Description (Optional)</label>
+                  <span className={`text-[10px] font-mono ${seo.description.length > 160 ? 'text-amber-500' : 'text-gray-600'}`}>
+                    {seo.description.length} chars (Target: 160)
+                  </span>
+                </div>
+                <textarea 
+                  value={seo.description} 
+                  onChange={(e) => setSeo(prev => ({ ...prev, description: e.target.value }))} 
+                  rows={3} 
+                  placeholder="Leave blank for AI to generate"
+                  className={inputClass + " resize-none"} 
+                />
+              </div>
+
+              {/* Google Preview Simulation */}
+              <div className="p-5 bg-white rounded-xl shadow-inner mt-4">
+                 <p className="text-[10px] font-bold text-gray-400 uppercase mb-3 tracking-widest flex items-center gap-2">
+                   <Globe className="w-3 h-3" /> Google Preview
+                 </p>
+                 <div className="max-w-lg text-left">
+                    <p className="text-[#1a0dab] text-lg font-medium hover:underline cursor-pointer truncate mb-1">
+                      {seo.title || (form.product_name ? `${form.product_name} - Sales Page` : 'Product Name - Sales Page')}
+                    </p>
+                    <p className="text-[#006621] text-sm mb-1 truncate">
+                      https://salesflow.ai/p/new-project
+                    </p>
+                    <p className="text-[#4d5156] text-sm leading-relaxed line-clamp-2">
+                      {seo.description || 'Provide a meta description or let AI generate a high-converting summary for you.'}
+                    </p>
+                 </div>
+              </div>
+            </div>
+          </section>
 
           {/* Product Visuals */}
           <section className="glass-card p-8 space-y-6 animate-fade-in-up delay-200">

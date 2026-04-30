@@ -32,6 +32,7 @@ export interface SalesPage {
   images: string[];
   language: string;
   currency: string;
+  seo: { title: string; description: string };
   created_at: string;
   updated_at: string;
 }

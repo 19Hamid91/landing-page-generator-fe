@@ -55,6 +55,7 @@ export default function EditSalesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingSeo, setIsGeneratingSeo] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -72,6 +73,11 @@ export default function EditSalesPage() {
     language: 'en',
     currency: 'USD',
     template_name: 'modern',
+  });
+
+  const [seo, setSeo] = useState({
+    title: '',
+    description: '',
   });
 
   // AI Preview states
@@ -98,6 +104,10 @@ export default function EditSalesPage() {
         setFeatures(page.features?.length > 0 ? page.features : ['']);
         setUsp(page.usp?.length > 0 ? page.usp : ['']);
         setImageItems(page.images?.length > 0 ? page.images : [null]);
+        setSeo({
+          title: page.seo?.title || '',
+          description: page.seo?.description || '',
+        });
       } catch (err: any) {
         console.error('Error loading sales page:', err);
         setError(err.response?.data?.message || 'Failed to load project data. Please ensure the project exists.');
@@ -136,6 +146,9 @@ export default function EditSalesPage() {
     formData.append('language', form.language);
     formData.append('currency', form.currency);
     formData.append('template_name', form.template_name);
+    
+    formData.append('seo[title]', seo.title);
+    formData.append('seo[description]', seo.description);
 
     features.filter(Boolean).forEach((f, i) => formData.append(`features[${i}]`, f));
     usp.filter(Boolean).forEach((u, i) => formData.append(`usp[${i}]`, u));
@@ -172,6 +185,25 @@ export default function EditSalesPage() {
       setError(err.response?.data?.message || 'Failed to generate preview.');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateSeo = async () => {
+    setError('');
+    setIsGeneratingSeo(true);
+    try {
+      const formData = prepareFormData();
+      const res = await api.post(`/sales-pages/${id}/generate-seo`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setSeo({
+        title: res.data.data.title,
+        description: res.data.data.description,
+      });
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to generate SEO metadata.');
+    } finally {
+      setIsGeneratingSeo(false);
     }
   };
 
@@ -441,6 +473,87 @@ export default function EditSalesPage() {
               </button>
             </section>
           </div>
+
+          {/* SEO Configuration */}
+          <section className="glass-card p-8 space-y-8 animate-fade-in-up delay-150 border-l-4 border-blue-500/50">
+            <div className="flex items-center justify-between pb-6 border-b border-white/5">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400">
+                  <Globe className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white">SEO Configuration</h2>
+                  <p className="text-[10px] text-gray-500 font-medium uppercase mt-0.5 tracking-wider">Search Engine Optimization</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={isGeneratingSeo || isSaving}
+                onClick={handleGenerateSeo}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-xs font-bold rounded-xl border border-indigo-500/20 transition-all disabled:opacity-50"
+              >
+                {isGeneratingSeo ? (
+                  <div className="w-3 h-3 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin" />
+                ) : (
+                  <Sparkles className="w-3 h-3" />
+                )}
+                Generate with AI
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <div className="flex justify-between items-end mb-2.5">
+                  <label className="text-sm font-semibold text-gray-400 ml-1">SEO Title</label>
+                  <span className={`text-[10px] font-mono ${seo.title.length > 255 ? 'text-red-500' : seo.title.length > 60 ? 'text-amber-500' : 'text-gray-600'}`}>
+                    {seo.title.length}/255 chars
+                  </span>
+                </div>
+                <input 
+                  type="text" 
+                  maxLength={255}
+                  value={seo.title} 
+                  onChange={(e) => setSeo(prev => ({ ...prev, title: e.target.value }))} 
+                  placeholder="The headline that appears in Google search results"
+                  className={inputClass} 
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-end mb-2.5">
+                  <label className="text-sm font-semibold text-gray-400 ml-1">Meta Description</label>
+                  <span className={`text-[10px] font-mono ${seo.description.length > 160 ? 'text-amber-500' : 'text-gray-600'}`}>
+                    {seo.description.length} chars (Target: 160)
+                  </span>
+                </div>
+                <textarea 
+                  value={seo.description} 
+                  onChange={(e) => setSeo(prev => ({ ...prev, description: e.target.value }))} 
+                  rows={3} 
+                  placeholder="A brief summary of your page to attract clicks from search results"
+                  className={inputClass + " resize-none"} 
+                />
+              </div>
+
+              {/* Google Preview Simulation */}
+              <div className="p-5 bg-white rounded-xl shadow-inner mt-4">
+                 <p className="text-[10px] font-bold text-gray-400 uppercase mb-3 tracking-widest flex items-center gap-2">
+                   <Globe className="w-3 h-3" /> Google Preview
+                 </p>
+                 <div className="max-w-lg text-left">
+                    <p className="text-[#1a0dab] text-lg font-medium hover:underline cursor-pointer truncate mb-1">
+                      {seo.title || 'Product Name - Sales Page'}
+                    </p>
+                    <p className="text-[#006621] text-sm mb-1 truncate">
+                      https://salesflow.ai/p/{id}
+                    </p>
+                    <p className="text-[#4d5156] text-sm leading-relaxed line-clamp-2">
+                      {seo.description || 'Provide a meta description to see how your page will appear in search results.'}
+                    </p>
+                 </div>
+              </div>
+            </div>
+          </section>
 
           {/* Product Visuals */}
           <section className="glass-card p-8 space-y-6 animate-fade-in-up delay-200">
