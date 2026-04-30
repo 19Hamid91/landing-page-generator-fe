@@ -61,7 +61,10 @@ export default function Home() {
                 {token ? "Go to Dashboard" : "Start Generating for Free"}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <button className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-2xl transition-all">
+              <button 
+                onClick={() => document.getElementById('templates-section')?.scrollIntoView({ behavior: 'smooth' })}
+                className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-2xl transition-all"
+              >
                 View Templates
               </button>
             </div>
@@ -82,9 +85,8 @@ export default function Home() {
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 blur-[100px] -z-10" />
             <div className="glass-card p-2 gradient-border overflow-hidden rotate-2 hover:rotate-0 transition-transform duration-700">
               <div className="rounded-xl overflow-hidden aspect-[4/3] relative">
-                {/* Mockup image placeholder - I will use the generated image here */}
                 <img 
-                  src="/hero-mockup.png" 
+                  src="/tech-modern.png" 
                   alt="AI Dashboard Mockup" 
                   className="w-full h-full object-cover"
                 />
@@ -107,8 +109,60 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Templates Showcase */}
+        <section id="templates-section" className="mt-40 space-y-16">
+          <div className="text-center space-y-4">
+            <h2 className="text-4xl font-bold text-white tracking-tight">Expertly Crafted Templates</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto leading-relaxed">
+              Choose from our curated collection of high-converting designs, each meticulously optimized for different product types and brand identities.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { 
+                id: 'modern', 
+                name: 'Tech Modern', 
+                desc: 'Vibrant indigo & violet gradients for SaaS and tech apps.',
+                color: 'from-indigo-600 to-violet-600',
+                image: '/tech-modern.png'
+              },
+              { 
+                id: 'elegant', 
+                name: 'Premium Gold', 
+                desc: 'Warm amber & deep orange tones for luxury products and courses.',
+                color: 'from-amber-500 to-orange-600',
+                image: '/premium-gold.png'
+              },
+              { 
+                id: 'dark', 
+                name: 'Midnight Pro', 
+                desc: 'Sleek slate & monochromatic cool for sophisticated professional services.',
+                color: 'from-slate-700 to-gray-900',
+                image: '/midnight-pro.png'
+              }
+            ].map((t, i) => (
+              <div key={t.id} className="group relative glass-card p-4 hover:border-indigo-500/30 transition-all duration-500 hover:-translate-y-2">
+                <div className="relative rounded-xl overflow-hidden aspect-[16/10] mb-6">
+                  <img src={t.image} alt={t.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                  <div className={`absolute inset-0 bg-gradient-to-br ${t.color} opacity-20 group-hover:opacity-40 transition-opacity`} />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[2px]">
+                    <Link href="/register" className="px-6 py-2.5 bg-white text-gray-950 font-bold rounded-xl text-sm shadow-xl">Use This Template</Link>
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">{t.name}</h3>
+                <p className="text-gray-400 text-sm leading-relaxed mb-4">{t.desc}</p>
+                <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-widest">
+                  <span>Explore Design</span>
+                  <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* Features Section */}
-        <div className="mt-32 grid md:grid-cols-3 gap-8">
+        <div className="mt-40 grid md:grid-cols-3 gap-8">
           {[
             {
               icon: <Wand2 className="w-6 h-6 text-indigo-400" />,
