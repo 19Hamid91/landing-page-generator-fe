@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, X, Sparkles, ChevronRight, Wand2, Zap, Globe } from 'lucide-react';
+import { Plus, X, Sparkles, ChevronRight, Wand2, Zap, Globe, Image as ImageIcon } from 'lucide-react';
 import api from '@/lib/axios';
 import Toast from '@/components/Toast';
 
@@ -45,7 +45,8 @@ export default function GeneratePage() {
   const [error, setError] = useState('');
   const [features, setFeatures] = useState<string[]>(['']);
   const [usp, setUsp] = useState<string[]>(['']);
-  const [images, setImages] = useState<string[]>(['']);
+  const [imageFiles, setImageFiles] = useState<(File | null)[]>([null]);
+  
   const [form, setForm] = useState({
     product_name: '',
     product_description: '',
@@ -65,23 +66,42 @@ export default function GeneratePage() {
     setList(updated);
   };
 
-  const addItem = (list: string[], setList: (v: string[]) => void) => setList([...list, '']);
-  const removeItem = (list: string[], setList: (v: string[]) => void, idx: number) =>
+  const addItem = (list: any[], setList: (v: any[]) => void, defaultValue: any = '') => setList([...list, defaultValue]);
+  const removeItem = (list: any[], setList: (v: any[]) => void, idx: number) =>
     setList(list.filter((_, i) => i !== idx));
+
+  const handleFileChange = (idx: number, file: File | null) => {
+    const updated = [...imageFiles];
+    updated[idx] = file;
+    setImageFiles(updated);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsGenerating(true);
     try {
-      const payload = {
-        ...form,
-        price: form.price ? Number(form.price) : undefined,
-        features: features.filter(Boolean),
-        usp: usp.filter(Boolean),
-        images: images.filter(Boolean),
-      };
-      const res = await api.post('/sales-pages', payload);
+      const formData = new FormData();
+      formData.append('product_name', form.product_name);
+      formData.append('product_description', form.product_description);
+      formData.append('target_audience', form.target_audience);
+      if (form.price) formData.append('price', form.price);
+      formData.append('language', form.language);
+      formData.append('currency', form.currency);
+      formData.append('template_name', form.template_name);
+
+      features.filter(Boolean).forEach((f, i) => formData.append(`features[${i}]`, f));
+      usp.filter(Boolean).forEach((u, i) => formData.append(`usp[${i}]`, u));
+      
+      imageFiles.forEach((file, i) => {
+        if (file) {
+          formData.append(`images[${i}]`, file);
+        }
+      });
+
+      const res = await api.post('/sales-pages', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       router.push(`/preview/${res.data.data.id}`);
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } };
@@ -234,27 +254,57 @@ export default function GeneratePage() {
                 <Globe className="w-4 h-4 text-blue-400" />
                 Product Visuals
               </h3>
-              <span className="text-[10px] bg-white/5 px-2 py-0.5 rounded-full text-gray-500 font-bold uppercase tracking-wider">Multimedia</span>
+              <span className="text-[10px] bg-white/5 px-2 py-0.5 rounded-full text-gray-500 font-bold uppercase tracking-wider">Images (Max 2MB)</span>
             </div>
-            <div className="space-y-4">
-              {images.map((img, i) => (
-                <div key={i} className="group relative">
-                  <input value={img} onChange={e => updateList(images, setImages, i, e.target.value)}
-                    placeholder={i === 0 ? "Main Image URL (Hero)" : `Additional Image URL ${i + 1}`} 
-                    className={inputClass} />
-                  {images.length > 1 && (
-                    <button type="button" onClick={() => removeItem(images, setImages, i)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
-                      <X className="w-4 h-4" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {imageFiles.map((file, i) => (
+                <div key={i} className="group relative glass-card p-4 border-white/5 hover:border-indigo-500/30 transition-all min-h-[200px] flex flex-col items-center justify-center">
+                  <label className="w-full h-full flex flex-col items-center justify-center gap-3 cursor-pointer">
+                    {file ? (
+                      <div className="relative w-full h-full min-h-[140px] rounded-xl overflow-hidden group/img">
+                        <img 
+                          src={URL.createObjectURL(file)} 
+                          alt="Preview" 
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-110" 
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
+                           <span className="text-white text-xs font-bold bg-indigo-600/80 px-3 py-1.5 rounded-full backdrop-blur-sm">Change Image</span>
+                        </div>
+                        <div className="absolute bottom-2 left-2 right-2 p-2 bg-black/60 backdrop-blur-md rounded-lg border border-white/10">
+                          <p className="text-[10px] text-white font-medium truncate">{file.name}</p>
+                          <p className="text-[9px] text-gray-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-3 py-8">
+                        <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-gray-500 group-hover:text-indigo-400 group-hover:bg-indigo-500/10 transition-all group-hover:scale-110 duration-300">
+                          <ImageIcon className="w-7 h-7" />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm font-bold text-gray-400 group-hover:text-white transition-colors">{i === 0 ? "Main Image" : "Secondary Image"}</p>
+                          <p className="text-[10px] text-gray-500 mt-1">Tap to browse files</p>
+                        </div>
+                      </div>
+                    )}
+                    <input type="file" className="sr-only" accept="image/*" 
+                      onChange={e => handleFileChange(i, e.target.files?.[0] || null)} />
+                  </label>
+                  
+                  {imageFiles.length > 1 && (
+                    <button type="button" onClick={() => removeItem(imageFiles, setImageFiles, i)}
+                      className="absolute top-2 right-2 p-1.5 bg-gray-950/80 backdrop-blur-md rounded-lg text-gray-500 hover:text-red-400 border border-white/10 z-10 transition-all hover:scale-110">
+                      <X className="w-3 h-3" />
                     </button>
                   )}
                 </div>
               ))}
+              
+              <button type="button" onClick={() => addItem(imageFiles, setImageFiles, null)}
+                className="flex flex-col items-center justify-center gap-3 py-8 border-2 border-dashed border-white/5 hover:border-indigo-500/30 hover:bg-indigo-500/5 rounded-2xl transition-all group min-h-[140px]">
+                <Plus className="w-6 h-6 text-gray-600 group-hover:text-indigo-400" />
+                <span className="text-xs font-bold text-gray-600 group-hover:text-indigo-400">Add More Image Slots</span>
+              </button>
             </div>
-            <button type="button" onClick={() => addItem(images, setImages)}
-              className="w-full py-3 border-2 border-dashed border-white/5 hover:border-blue-500/30 hover:bg-blue-500/5 rounded-2xl text-xs font-bold text-gray-500 hover:text-blue-400 transition-all flex items-center justify-center gap-2">
-              <Plus className="w-4 h-4" /> Add Another Image
-            </button>
           </section>
 
           {/* Template Selection */}

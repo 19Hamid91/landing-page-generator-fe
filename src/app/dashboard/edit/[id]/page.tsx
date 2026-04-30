@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import {
   Plus, X, Sparkles, ChevronRight, Wand2, Zap, Globe,
-  ArrowLeft, Save, CheckCircle2, AlertCircle, Copy, Check
+  ArrowLeft, Save, CheckCircle2, AlertCircle, Copy, Check, Image as ImageIcon
 } from 'lucide-react';
 import api from '@/lib/axios';
 import { SalesPage, AiOutput } from '@/types';
@@ -62,7 +62,8 @@ export default function EditSalesPage() {
   const [originalPage, setOriginalPage] = useState<SalesPage | null>(null);
   const [features, setFeatures] = useState<string[]>(['']);
   const [usp, setUsp] = useState<string[]>(['']);
-  const [images, setImages] = useState<string[]>(['']);
+  const [imageItems, setImageItems] = useState<(string | File | null)[]>([]);
+  
   const [form, setForm] = useState({
     product_name: '',
     product_description: '',
@@ -96,7 +97,7 @@ export default function EditSalesPage() {
         });
         setFeatures(page.features?.length > 0 ? page.features : ['']);
         setUsp(page.usp?.length > 0 ? page.usp : ['']);
-        setImages(page.images?.length > 0 ? page.images : ['']);
+        setImageItems(page.images?.length > 0 ? page.images : [null]);
       } catch (err: any) {
         console.error('Error loading sales page:', err);
         setError(err.response?.data?.message || 'Failed to load project data. Please ensure the project exists.');
@@ -110,28 +111,60 @@ export default function EditSalesPage() {
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(prev => ({ ...prev, [field]: e.target.value }));
 
-  const updateList = (list: string[], setList: (v: string[]) => void, idx: number, val: string) => {
+  const updateList = (list: any[], setList: (v: any[]) => void, idx: number, val: any) => {
     const updated = [...list];
     updated[idx] = val;
     setList(updated);
   };
 
-  const addItem = (list: string[], setList: (v: string[]) => void) => setList([...list, '']);
-  const removeItem = (list: string[], setList: (v: string[]) => void, idx: number) =>
+  const addItem = (list: any[], setList: (v: any[]) => void, defaultValue: any = '') => setList([...list, defaultValue]);
+  const removeItem = (list: any[], setList: (v: any[]) => void, idx: number) =>
     setList(list.filter((_, i) => i !== idx));
+
+  const handleFileChange = (idx: number, file: File | null) => {
+    const updated = [...imageItems];
+    updated[idx] = file;
+    setImageItems(updated);
+  };
+
+  const prepareFormData = (confirmedAiOutput?: AiOutput) => {
+    const formData = new FormData();
+    formData.append('product_name', form.product_name);
+    formData.append('product_description', form.product_description);
+    formData.append('target_audience', form.target_audience);
+    if (form.price) formData.append('price', form.price);
+    formData.append('language', form.language);
+    formData.append('currency', form.currency);
+    formData.append('template_name', form.template_name);
+
+    features.filter(Boolean).forEach((f, i) => formData.append(`features[${i}]`, f));
+    usp.filter(Boolean).forEach((u, i) => formData.append(`usp[${i}]`, u));
+    
+    imageItems.forEach((item, i) => {
+      if (item instanceof File) {
+        formData.append(`images[${i}]`, item);
+      } else if (typeof item === 'string') {
+        formData.append(`images[${i}]`, item);
+      }
+    });
+
+    if (confirmedAiOutput) {
+      formData.append('ai_output', JSON.stringify(confirmedAiOutput));
+    } else if (originalPage?.ai_output) {
+      formData.append('ai_output', JSON.stringify(originalPage.ai_output));
+    }
+
+    return formData;
+  };
 
   const handleRegenerate = async () => {
     setError('');
     setIsGenerating(true);
     try {
-      const payload = {
-        ...form,
-        price: form.price ? Number(form.price) : undefined,
-        features: features.filter(Boolean),
-        usp: usp.filter(Boolean),
-        images: images.filter(Boolean),
-      };
-      const res = await api.post(`/sales-pages/${id}/generate`, payload);
+      const formData = prepareFormData();
+      const res = await api.post(`/sales-pages/${id}/generate`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       setNewAiOutput(res.data.data);
       setShowComparison(true);
       setActivePreview('new');
@@ -147,15 +180,13 @@ export default function EditSalesPage() {
     setSuccess('');
     setIsSaving(true);
     try {
-      const payload = {
-        ...form,
-        price: form.price ? Number(form.price) : undefined,
-        features: features.filter(Boolean),
-        usp: usp.filter(Boolean),
-        images: images.filter(Boolean),
-        ai_output: confirmedAiOutput || originalPage?.ai_output,
-      };
-      const res = await api.put(`/sales-pages/${id}`, payload);
+      const formData = prepareFormData(confirmedAiOutput);
+      // Laravel update with FormData usually requires _method: PUT
+      formData.append('_method', 'PUT');
+      
+      const res = await api.post(`/sales-pages/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       setOriginalPage(res.data.data);
       setShowComparison(false);
       setSuccess('Project updated successfully!');
@@ -224,7 +255,7 @@ export default function EditSalesPage() {
                 template={form.template_name as any}
                 productName={form.product_name}
                 price={form.price}
-                images={images.filter(Boolean)}
+                images={imageItems.map(item => typeof item === 'string' ? item : null).filter(Boolean) as string[]}
                 currency={form.currency}
               />
             </div>
@@ -413,29 +444,67 @@ export default function EditSalesPage() {
 
           {/* Product Visuals */}
           <section className="glass-card p-8 space-y-6 animate-fade-in-up delay-200">
-            <h3 className="font-bold text-white flex items-center gap-2 pb-4 border-b border-white/5">
-              <Globe className="w-4 h-4 text-blue-400" />
-              Product Visuals
-            </h3>
-            <div className="space-y-4">
-              {images.map((img, i) => (
-                <div key={i} className="group relative">
-                  <input value={img} onChange={e => updateList(images, setImages, i, e.target.value)}
-                    placeholder={i === 0 ? "Main Image URL" : `Additional Image URL ${i + 1}`}
-                    className={inputClass} />
-                  {images.length > 1 && (
-                    <button type="button" onClick={() => removeItem(images, setImages, i)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
-                      <X className="w-4 h-4" />
+            <div className="flex items-center justify-between pb-4 border-b border-white/5">
+              <h3 className="font-bold text-white flex items-center gap-2">
+                <Globe className="w-4 h-4 text-blue-400" />
+                Product Visuals
+              </h3>
+              <span className="text-[10px] bg-white/5 px-2 py-0.5 rounded-full text-gray-500 font-bold uppercase tracking-wider">Images (Max 2MB)</span>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {imageItems.map((item, i) => (
+                <div key={i} className="group relative glass-card p-4 border-white/5 hover:border-indigo-500/30 transition-all min-h-[200px] flex flex-col items-center justify-center">
+                  <label className="w-full h-full flex flex-col items-center justify-center gap-3 cursor-pointer">
+                    {item ? (
+                      <div className="relative w-full h-full min-h-[140px] rounded-xl overflow-hidden group/img">
+                        <img 
+                          src={item instanceof File ? URL.createObjectURL(item) : item} 
+                          alt="Preview" 
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-110" 
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
+                           <span className="text-white text-xs font-bold bg-indigo-600/80 px-3 py-1.5 rounded-full backdrop-blur-sm">Replace Image</span>
+                        </div>
+                        <div className="absolute bottom-2 left-2 right-2 p-2 bg-black/60 backdrop-blur-md rounded-lg border border-white/10">
+                          <p className="text-[10px] text-white font-medium truncate">
+                            {item instanceof File ? item.name : 'Stored Image'}
+                          </p>
+                          {item instanceof File && (
+                            <p className="text-[9px] text-gray-400">{(item.size / 1024 / 1024).toFixed(2)} MB</p>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-3 py-8">
+                        <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-gray-500 group-hover:text-indigo-400 group-hover:bg-indigo-500/10 transition-all group-hover:scale-110 duration-300">
+                          <ImageIcon className="w-7 h-7" />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm font-bold text-gray-400 group-hover:text-white transition-colors">Add Image</p>
+                          <p className="text-[10px] text-gray-500 mt-1">Tap to browse files</p>
+                        </div>
+                      </div>
+                    )}
+                    <input type="file" className="sr-only" accept="image/*" 
+                      onChange={e => handleFileChange(i, e.target.files?.[0] || null)} />
+                  </label>
+                  
+                  {imageItems.length > 1 && (
+                    <button type="button" onClick={() => removeItem(imageItems, setImageItems, i)}
+                      className="absolute top-2 right-2 p-1.5 bg-gray-950/80 backdrop-blur-md rounded-lg text-gray-500 hover:text-red-400 border border-white/10 z-10 transition-all hover:scale-110">
+                      <X className="w-3 h-3" />
                     </button>
                   )}
                 </div>
               ))}
+              
+              <button type="button" onClick={() => addItem(imageItems, setImageItems, null)}
+                className="flex flex-col items-center justify-center gap-3 py-8 border-2 border-dashed border-white/5 hover:border-indigo-500/30 hover:bg-indigo-500/5 rounded-2xl transition-all group min-h-[140px]">
+                <Plus className="w-6 h-6 text-gray-600 group-hover:text-indigo-400" />
+                <span className="text-xs font-bold text-gray-600 group-hover:text-indigo-400">Add More Image Slots</span>
+              </button>
             </div>
-            <button type="button" onClick={() => addItem(images, setImages)}
-              className="w-full py-3 border-2 border-dashed border-white/5 hover:border-blue-500/30 hover:bg-blue-500/5 rounded-2xl text-xs font-bold text-gray-500 hover:text-blue-400 transition-all flex items-center justify-center gap-2">
-              <Plus className="w-4 h-4" /> Add Image
-            </button>
           </section>
 
           {/* Visual Style */}
