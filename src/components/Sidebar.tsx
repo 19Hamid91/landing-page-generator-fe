@@ -33,26 +33,26 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={clsx(
-          'fixed top-0 left-0 h-full w-64 z-40 flex flex-col',
+          'fixed top-0 left-0 h-screen w-72 z-40 flex flex-col',
           'bg-gray-900/95 backdrop-blur-xl border-r border-gray-800/50',
           'transition-transform duration-300 ease-in-out',
-          'lg:translate-x-0 lg:static lg:z-auto',
+          'lg:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between p-5 border-b border-gray-800/50">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-              <Sparkles className="w-4 h-4 text-white" />
+        <div className="flex items-center justify-between p-6 border-b border-gray-800/50">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-110 transition-transform">
+              <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="font-bold text-sm text-white leading-none">AI Sales</p>
-              <p className="text-xs text-gray-400">Generator</p>
+              <p className="font-bold text-lg text-white leading-none tracking-tight">SalesAI</p>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Intelligence</p>
             </div>
-          </div>
+          </Link>
           {onClose && (
-            <button onClick={onClose} className="lg:hidden text-gray-400 hover:text-white transition-colors">
+            <button onClick={onClose} className="lg:hidden p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
               <X className="w-5 h-5" />
             </button>
           )}

@@ -143,6 +143,8 @@ export default function PreviewPage() {
             template={activeTemplate}
             productName={page.product_name}
             price={page.price}
+            images={page.images}
+            currency={page.currency}
           />
         </div>
       </div>

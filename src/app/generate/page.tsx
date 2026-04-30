@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, X, Sparkles, ChevronRight, Wand2 } from 'lucide-react';
+import { Plus, X, Sparkles, ChevronRight, Wand2, Zap, Globe } from 'lucide-react';
 import api from '@/lib/axios';
 
 function GeneratingOverlay() {
@@ -44,11 +44,14 @@ export default function GeneratePage() {
   const [error, setError] = useState('');
   const [features, setFeatures] = useState<string[]>(['']);
   const [usp, setUsp] = useState<string[]>(['']);
+  const [images, setImages] = useState<string[]>(['']);
   const [form, setForm] = useState({
     product_name: '',
     product_description: '',
     target_audience: '',
     price: '',
+    language: 'en',
+    currency: 'USD',
     template_name: 'modern',
   });
 
@@ -75,6 +78,7 @@ export default function GeneratePage() {
         price: form.price ? Number(form.price) : undefined,
         features: features.filter(Boolean),
         usp: usp.filter(Boolean),
+        images: images.filter(Boolean),
       };
       const res = await api.post('/sales-pages', payload);
       router.push(`/preview/${res.data.data.id}`);
@@ -87,147 +91,225 @@ export default function GeneratePage() {
     }
   };
 
-  const inputClass = "w-full px-4 py-3 bg-gray-900/80 border border-gray-700 rounded-xl text-gray-100 placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors text-sm";
-  const labelClass = "block text-sm font-medium text-gray-300 mb-2";
+  const inputClass = "w-full px-4 py-3.5 bg-gray-900/50 border border-gray-800 rounded-2xl text-gray-100 placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all duration-200 text-sm hover:border-gray-700";
+  const labelClass = "block text-sm font-semibold text-gray-400 mb-2.5 ml-1";
 
   return (
     <>
       {isGenerating && <GeneratingOverlay />}
 
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-4xl mx-auto pb-20">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-              <Wand2 className="w-5 h-5 text-white" />
+        <div className="mb-12 animate-fade-in-up">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl shadow-indigo-500/20">
+              <Wand2 className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-white">Generate Sales Page</h1>
+            <h1 className="text-3xl font-bold text-white tracking-tight">Create New Sales Page</h1>
           </div>
-          <p className="text-gray-400 text-sm ml-13">
-            Fill in your product details and let Gemini AI write compelling copy.
+          <p className="text-gray-400 max-w-lg leading-relaxed">
+            Provide details about your product, and our AI will engineer a high-converting sales experience.
           </p>
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6 text-red-400 text-sm">
+          <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-5 mb-10 flex items-center gap-3 text-red-400 text-sm animate-fade-in-up">
+            <X className="w-5 h-5 flex-shrink-0" />
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-10">
           {/* Basic Info */}
-          <div className="glass-card gradient-border p-6 space-y-5">
-            <h2 className="font-semibold text-gray-200 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 text-xs flex items-center justify-center font-bold">1</span>
-              Product Information
-            </h2>
+          <section className="glass-card p-8 space-y-8 animate-fade-in-up delay-100">
+            <div className="flex items-center gap-3 pb-6 border-b border-white/5">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <h2 className="text-xl font-bold text-white">Project Identity</h2>
+            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div>
-                <label htmlFor="product-name" className={labelClass}>Product Name *</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="md:col-span-1">
+                <label htmlFor="product-name" className={labelClass}>Product Name</label>
                 <input id="product-name" type="text" value={form.product_name} onChange={set('product_name')} required
-                  placeholder="e.g. ProBoost CRM" className={inputClass} />
+                  placeholder="e.g. SalesFlow AI" className={inputClass} />
               </div>
               <div>
-                <label htmlFor="price" className={labelClass}>Price (optional)</label>
-                <input id="price" type="number" value={form.price} onChange={set('price')}
-                  placeholder="e.g. 97" min="0" step="0.01" className={inputClass} />
+                <label htmlFor="language" className={labelClass}>Language</label>
+                <select id="language" value={form.language} onChange={set('language')} className={inputClass}>
+                  <option value="en">English (EN)</option>
+                  <option value="id">Indonesian (ID)</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="currency" className={labelClass}>Currency</label>
+                <select id="currency" value={form.currency} onChange={set('currency')} className={inputClass}>
+                  <option value="USD">USD ($)</option>
+                  <option value="IDR">IDR (Rp)</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="price" className={labelClass}>Price Point</label>
+                <div className="relative">
+                  <input id="price" type="number" value={form.price} onChange={set('price')}
+                    placeholder="99" min="0" step="0.01" className={inputClass} />
+                </div>
               </div>
             </div>
 
             <div>
-              <label htmlFor="product-description" className={labelClass}>Product Description *</label>
-              <textarea id="product-description" value={form.product_description} onChange={set('product_description')} required rows={3}
-                placeholder="Describe what your product does and the problem it solves..."
-                className={inputClass + " resize-none"} />
+              <label htmlFor="product-description" className={labelClass}>Value Proposition</label>
+              <textarea id="product-description" value={form.product_description} onChange={set('product_description')} required rows={4}
+                placeholder="What makes your product special? What problem does it solve for your users?"
+                className={inputClass + " resize-none leading-relaxed"} />
             </div>
 
             <div>
-              <label htmlFor="target-audience" className={labelClass}>Target Audience *</label>
+              <label htmlFor="target-audience" className={labelClass}>Ideal Customer</label>
               <input id="target-audience" type="text" value={form.target_audience} onChange={set('target_audience')} required
-                placeholder="e.g. Freelancers, SaaS founders, E-commerce owners" className={inputClass} />
+                placeholder="e.g. Solopreneurs, Digital Marketers, Remote Teams" className={inputClass} />
             </div>
-          </div>
+          </section>
 
-          {/* Features */}
-          <div className="glass-card gradient-border p-6 space-y-4">
-            <h2 className="font-semibold text-gray-200 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 text-xs flex items-center justify-center font-bold">2</span>
-              Key Features
-            </h2>
-            {features.map((feat, i) => (
-              <div key={i} className="flex gap-2">
-                <input value={feat} onChange={e => updateList(features, setFeatures, i, e.target.value)}
-                  placeholder={`Feature ${i + 1}`} className={inputClass + " flex-1"} />
-                {features.length > 1 && (
-                  <button type="button" onClick={() => removeItem(features, setFeatures, i)}
-                    className="p-3 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all">
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
+          {/* Features & USP in Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-fade-in-up delay-200">
+            {/* Features */}
+            <section className="glass-card p-8 space-y-6">
+              <div className="flex items-center justify-between pb-4 border-b border-white/5">
+                <h3 className="font-bold text-white flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-purple-400" />
+                  Key Features
+                </h3>
+                <span className="text-[10px] bg-white/5 px-2 py-0.5 rounded-full text-gray-500 font-bold uppercase tracking-wider">Functional</span>
               </div>
-            ))}
-            <button type="button" onClick={() => addItem(features, setFeatures)}
-              className="flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
-              <Plus className="w-4 h-4" /> Add Feature
-            </button>
-          </div>
-
-          {/* USP */}
-          <div className="glass-card gradient-border p-6 space-y-4">
-            <h2 className="font-semibold text-gray-200 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 text-xs flex items-center justify-center font-bold">3</span>
-              Unique Selling Points (USP)
-            </h2>
-            {usp.map((item, i) => (
-              <div key={i} className="flex gap-2">
-                <input value={item} onChange={e => updateList(usp, setUsp, i, e.target.value)}
-                  placeholder={`USP ${i + 1}`} className={inputClass + " flex-1"} />
-                {usp.length > 1 && (
-                  <button type="button" onClick={() => removeItem(usp, setUsp, i)}
-                    className="p-3 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all">
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
+              <div className="space-y-4">
+                {features.map((feat, i) => (
+                  <div key={i} className="group relative">
+                    <input value={feat} onChange={e => updateList(features, setFeatures, i, e.target.value)}
+                      placeholder={`Feature ${i + 1}`} className={inputClass} />
+                    {features.length > 1 && (
+                      <button type="button" onClick={() => removeItem(features, setFeatures, i)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
-            <button type="button" onClick={() => addItem(usp, setUsp)}
-              className="flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
-              <Plus className="w-4 h-4" /> Add USP
-            </button>
+              <button type="button" onClick={() => addItem(features, setFeatures)}
+                className="w-full py-3 border-2 border-dashed border-white/5 hover:border-indigo-500/30 hover:bg-indigo-500/5 rounded-2xl text-xs font-bold text-gray-500 hover:text-indigo-400 transition-all flex items-center justify-center gap-2">
+                <Plus className="w-4 h-4" /> Add Another Feature
+              </button>
+            </section>
+
+            {/* USP */}
+            <section className="glass-card p-8 space-y-6">
+              <div className="flex items-center justify-between pb-4 border-b border-white/5">
+                <h3 className="font-bold text-white flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-pink-400" />
+                  Unique Selling Points
+                </h3>
+                <span className="text-[10px] bg-white/5 px-2 py-0.5 rounded-full text-gray-500 font-bold uppercase tracking-wider">Competitive</span>
+              </div>
+              <div className="space-y-4">
+                {usp.map((item, i) => (
+                  <div key={i} className="group relative">
+                    <input value={item} onChange={e => updateList(usp, setUsp, i, e.target.value)}
+                      placeholder={`USP ${i + 1}`} className={inputClass} />
+                    {usp.length > 1 && (
+                      <button type="button" onClick={() => removeItem(usp, setUsp, i)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <button type="button" onClick={() => addItem(usp, setUsp)}
+                className="w-full py-3 border-2 border-dashed border-white/5 hover:border-indigo-500/30 hover:bg-indigo-500/5 rounded-2xl text-xs font-bold text-gray-500 hover:text-indigo-400 transition-all flex items-center justify-center gap-2">
+                <Plus className="w-4 h-4" /> Add Another USP
+              </button>
+            </section>
           </div>
 
-          {/* Template */}
-          <div className="glass-card gradient-border p-6 space-y-4">
-            <h2 className="font-semibold text-gray-200 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 text-xs flex items-center justify-center font-bold">4</span>
-              Template Style
-            </h2>
-            <div className="grid grid-cols-3 gap-3">
+          {/* Product Visuals */}
+          <section className="glass-card p-8 space-y-6 animate-fade-in-up delay-200">
+            <div className="flex items-center justify-between pb-4 border-b border-white/5">
+              <h3 className="font-bold text-white flex items-center gap-2">
+                <Globe className="w-4 h-4 text-blue-400" />
+                Product Visuals
+              </h3>
+              <span className="text-[10px] bg-white/5 px-2 py-0.5 rounded-full text-gray-500 font-bold uppercase tracking-wider">Multimedia</span>
+            </div>
+            <div className="space-y-4">
+              {images.map((img, i) => (
+                <div key={i} className="group relative">
+                  <input value={img} onChange={e => updateList(images, setImages, i, e.target.value)}
+                    placeholder={i === 0 ? "Main Image URL (Hero)" : `Additional Image URL ${i + 1}`} 
+                    className={inputClass} />
+                  {images.length > 1 && (
+                    <button type="button" onClick={() => removeItem(images, setImages, i)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <button type="button" onClick={() => addItem(images, setImages)}
+              className="w-full py-3 border-2 border-dashed border-white/5 hover:border-blue-500/30 hover:bg-blue-500/5 rounded-2xl text-xs font-bold text-gray-500 hover:text-blue-400 transition-all flex items-center justify-center gap-2">
+              <Plus className="w-4 h-4" /> Add Another Image
+            </button>
+          </section>
+
+          {/* Template Selection */}
+          <section className="glass-card p-8 space-y-8 animate-fade-in-up delay-300">
+            <div className="flex items-center gap-3 pb-6 border-b border-white/5">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400">
+                <Globe className="w-4 h-4" />
+              </div>
+              <h2 className="text-xl font-bold text-white">Visual Style</h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               {[
-                { id: 'modern', label: 'Modern', desc: 'Indigo & violet', bg: 'from-indigo-600 to-violet-600' },
-                { id: 'elegant', label: 'Elegant', desc: 'Amber & warm', bg: 'from-amber-500 to-orange-600' },
-                { id: 'dark', label: 'Dark', desc: 'Slate & cool', bg: 'from-slate-600 to-gray-700' },
+                { id: 'modern', label: 'Tech Modern', desc: 'Vibrant indigo & violet gradients', bg: 'from-indigo-600 to-violet-600' },
+                { id: 'elegant', label: 'Premium Gold', desc: 'Warm amber & deep orange tones', bg: 'from-amber-500 to-orange-600' },
+                { id: 'dark', label: 'Midnight Pro', desc: 'Sleek slate & monochromatic cool', bg: 'from-slate-700 to-gray-900' },
               ].map(t => (
                 <label key={t.id} htmlFor={`template-${t.id}`}
-                  className={`cursor-pointer rounded-xl p-4 border-2 transition-all duration-200 ${form.template_name === t.id ? 'border-indigo-500 bg-indigo-500/10' : 'border-gray-700 hover:border-gray-600'}`}>
+                  className={`relative cursor-pointer group rounded-2xl p-6 border-2 transition-all duration-300 ${form.template_name === t.id ? 'border-indigo-500 bg-indigo-500/5 shadow-lg shadow-indigo-500/10' : 'border-white/5 hover:border-white/10 hover:bg-white/5'}`}>
                   <input id={`template-${t.id}`} type="radio" name="template" value={t.id}
                     checked={form.template_name === t.id} onChange={set('template_name')} className="sr-only" />
-                  <div className={`h-8 rounded-lg bg-gradient-to-r ${t.bg} mb-3`} />
-                  <p className="text-sm font-medium text-gray-200">{t.label}</p>
-                  <p className="text-xs text-gray-500">{t.desc}</p>
+
+                  <div className={`h-24 rounded-xl bg-gradient-to-br ${t.bg} mb-6 shadow-lg group-hover:scale-105 transition-transform duration-500`} />
+                  <p className="font-bold text-white mb-1">{t.label}</p>
+                  <p className="text-xs text-gray-500 leading-relaxed">{t.desc}</p>
+
+                  {form.template_name === t.id && (
+                    <div className="absolute top-4 right-4 w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center">
+                      <Sparkles className="w-3 h-3 text-white" />
+                    </div>
+                  )}
                 </label>
               ))}
             </div>
-          </div>
+          </section>
 
           {/* Submit */}
-          <button type="submit" id="generate-submit-btn" disabled={isGenerating}
-            className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 flex items-center justify-center gap-2 text-sm">
-            <Sparkles className="w-4 h-4" />
-            Generate with AI
-            <ChevronRight className="w-4 h-4" />
-          </button>
+          <div className="pt-6 animate-fade-in-up delay-300">
+            <button type="submit" id="generate-submit-btn" disabled={isGenerating}
+              className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-bold rounded-2xl transition-all shadow-2xl shadow-indigo-500/20 hover:shadow-indigo-500/40 flex items-center justify-center gap-3 group">
+              <Sparkles className="w-5 h-5 group-hover:animate-pulse" />
+              <span className="text-lg">Generate Sales Page with AI</span>
+              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+            <p className="text-center text-gray-500 text-xs mt-6 flex items-center justify-center gap-2">
+              <Zap className="w-3 h-3" />
+              Powered by Gemini 2.0 Flash • High-fidelity output guaranteed
+            </p>
+          </div>
         </form>
       </div>
     </>

@@ -29,6 +29,9 @@ export interface SalesPage {
   usp: string[];
   ai_output: AiOutput;
   template_name: string;
+  images: string[];
+  language: string;
+  currency: string;
   created_at: string;
   updated_at: string;
 }
