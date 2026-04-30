@@ -163,6 +163,13 @@ export default function DashboardPage() {
                     <Eye className="w-4 h-4" /> Preview
                   </button>
                   <button
+                    id={`edit-page-${page.id}`}
+                    onClick={() => router.push(`/dashboard/edit/${page.id}`)}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold text-indigo-400 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all"
+                  >
+                    <Wand2 className="w-4 h-4" /> Edit
+                  </button>
+                  <button
                     id={`delete-page-${page.id}`}
                     onClick={() => handleDelete(page.id)}
                     disabled={deletingId === page.id}

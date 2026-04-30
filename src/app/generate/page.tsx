@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, X, Sparkles, ChevronRight, Wand2, Zap, Globe } from 'lucide-react';
 import api from '@/lib/axios';
+import Toast from '@/components/Toast';
 
 function GeneratingOverlay() {
   return (
-    <div className="fixed inset-0 bg-gray-950/90 backdrop-blur-sm z-50 flex items-center justify-center">
-      <div className="text-center space-y-6">
+    <div className="fixed inset-0 bg-gray-950/90 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in">
+      <div className="text-center space-y-6 animate-scale-in">
         <div className="relative mx-auto w-24 h-24">
           <div className="absolute inset-0 rounded-full border-2 border-indigo-500/30 animate-ping" />
           <div className="absolute inset-2 rounded-full border-2 border-purple-500/40 animate-spin" />
@@ -111,13 +112,6 @@ export default function GeneratePage() {
             Provide details about your product, and our AI will engineer a high-converting sales experience.
           </p>
         </div>
-
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-5 mb-10 flex items-center gap-3 text-red-400 text-sm animate-fade-in-up">
-            <X className="w-5 h-5 flex-shrink-0" />
-            {error}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-10">
           {/* Basic Info */}
@@ -312,6 +306,8 @@ export default function GeneratePage() {
           </div>
         </form>
       </div>
+
+      {error && <Toast message={error} type="error" onClose={() => setError('')} />}
     </>
   );
 }
